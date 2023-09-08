@@ -4,7 +4,7 @@ const readline = require("readline");
 const stream = require("stream");
 
 // Load CSV file
-const inputFile = "data/concepts.csv"; // Replace 'your_data.csv' with the path to your CSV
+const inputFile = "../data/concepts.csv"; // Replace 'your_data.csv' with the path to your CSV
 
 const readStream = fs.createReadStream(inputFile);
 const rl = readline.createInterface({
