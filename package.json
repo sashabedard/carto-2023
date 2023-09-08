@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "create-folders": "node scripts/initFolders.js"
+    "create-folders": "node scripts/initFolders.js",
+    "encodeImages": "node scripts/encodeImages.mjs"
   },
   "keywords": [
     "sample",
@@ -15,7 +16,9 @@
   "author": "Your Name",
   "license": "ISC",
   "dependencies": {
+    "@xenova/transformers": "^2.6.0",
     "express": "^4.17.1",
+    "node-fetch": "^3.3.2",
     "papaparse": "^5.4.1"
   },
   "devDependencies": {
