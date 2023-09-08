@@ -25,7 +25,7 @@ fs.readFile(inputFile, "utf8", (err, data) => {
       return;
     }
 
-    console.log(etudiant, "etudiant");
+    // console.log(etudiant, "etudiant");
 
     const finalFolderPath = path.join("concepts", etudiant, folderName);
 
