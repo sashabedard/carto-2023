@@ -1,47 +1,42 @@
 const fs = require("fs");
 const path = require("path");
-const readline = require("readline");
-const stream = require("stream");
+const Papa = require("papaparse");
 
-// Load CSV file
-const inputFile = "../data/concepts.csv"; // Replace 'your_data.csv' with the path to your CSV
+const inputFile = "data/concepts.csv"; // Path to your CSV file
 
-const readStream = fs.createReadStream(inputFile);
-const rl = readline.createInterface({
-  input: readStream,
-  output: new stream.PassThrough(),
-});
-
-// Skip the header
-let isHeader = true;
-
-rl.on("line", function (line) {
-  if (isHeader) {
-    isHeader = false;
+fs.readFile(inputFile, "utf8", (err, data) => {
+  if (err) {
+    console.error(`Error reading the file: ${err}`);
     return;
   }
 
-  // Split line by commas
-  const parts = line.split(",");
-  // Extract the id (folder name) and étudiant
-  const folderName = parts[0].trim();
-  const etudiant = parts[5].trim();
+  // Parse CSV using PapaParse
+  const parsedData = Papa.parse(data, {
+    header: true,
+    skipEmptyLines: true,
+  });
 
-  // Skip if id or étudiant is empty
-  if (!folderName || !etudiant) {
-    return;
-  }
-  const finalFolderPath = path.join("concepts", etudiant, folderName);
+  parsedData.data.forEach((row) => {
+    const folderName = row.id ? row.id.trim() : "";
+    const etudiant = row.étudiant ? row.étudiant.trim() : "";
 
-  // Create folder if it doesn't exist
-  if (!fs.existsSync(finalFolderPath)) {
-    fs.mkdirSync(finalFolderPath, { recursive: true });
-  }
+    // Skip if id or étudiant is empty
+    if (!folderName || !etudiant) {
+      return;
+    }
 
-  // Create a .gitkeep file within the folder
-  fs.closeSync(fs.openSync(path.join(finalFolderPath, ".gitkeep"), "w"));
-});
+    console.log(etudiant, "etudiant");
 
-rl.on("close", function () {
+    const finalFolderPath = path.join("concepts", etudiant, folderName);
+
+    // Create folder if it doesn't exist
+    if (!fs.existsSync(finalFolderPath)) {
+      fs.mkdirSync(finalFolderPath, { recursive: true });
+    }
+
+    // Create a .gitkeep file within the folder
+    fs.closeSync(fs.openSync(path.join(finalFolderPath, ".gitkeep"), "w"));
+  });
+
   console.log("Finished processing the CSV.");
 });
