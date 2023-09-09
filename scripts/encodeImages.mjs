@@ -3,6 +3,10 @@ import fs from "fs";
 import path from "path";
 import _ from "lodash";
 
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 if (!globalThis.fetch) {
   globalThis.fetch = fetch;
   globalThis.Headers = Headers;
@@ -12,6 +16,7 @@ import { pipeline } from "@xenova/transformers";
 
 var dummy = "cats are pretty, i guess"; // "I love transformers!";
 
+const RERUN_ALL_CLIP = false;
 const CLIP_MODEL = "Xenova/clip-vit-large-patch14"; // "Xenova/clip-vit-base-patch16"; // "openai/clip-vit-base-patch32";
 
 import {
@@ -50,10 +55,19 @@ async function clipByUrl(url) {
   }
 }
 
+// Assuming you've imported path at the beginning of your code
+const projectRoot = path.resolve(__dirname, ".."); // Moves one directory up from current
+
 async function saveEmbeddingToFile(embed_as_list, imagePath) {
-  const dirname = path.dirname(imagePath);
+  // Extract the directory name of the imagePath
+  const dirname = path.relative(projectRoot, path.dirname(imagePath));
+
+  // Create a new directory path for storing embeddings
+  const newDir = path.join(projectRoot, "data", dirname);
+
+  // Use the same filename logic as before
   const filenameWithoutExt = path.basename(imagePath, path.extname(imagePath));
-  const savePath = path.join(dirname, "data", `${filenameWithoutExt}.txt`);
+  const savePath = path.join(newDir, `${filenameWithoutExt}.txt`);
 
   // Ensure the directory exists
   if (!fs.existsSync(path.dirname(savePath))) {
@@ -64,19 +78,32 @@ async function saveEmbeddingToFile(embed_as_list, imagePath) {
 }
 
 async function clipImageAndSave(imgPath) {
-  const dirname = path.dirname(imgPath);
-  const filenameWithoutExt = path.basename(imgPath, path.extname(imgPath));
-  const savePath = path.join(dirname, "data", `${filenameWithoutExt}.txt`);
+  console.log(`Starting process for: ${imgPath}`); // To see the image path being processed
 
-  if (!fs.existsSync(savePath)) {
+  const dirname = path.dirname(imgPath);
+  console.log(`Directory of image: ${dirname}`);
+
+  const filenameWithoutExt = path.basename(imgPath, path.extname(imgPath));
+  var savePath = path.join(dirname, `${filenameWithoutExt}.txt`);
+  savePath = savePath.replace("concepts", "data/concepts/");
+  console.log(`Intended save path: ${savePath}`);
+
+  if (RERUN_ALL_CLIP || !fs.existsSync(savePath)) {
+    console.log(`Processing image: ${imgPath}`);
+
     const url = clipLocalPath(imgPath);
+    console.log(`Converted local path to URL: ${url}`);
+
     const embed_as_list = await clipByUrl(url);
+    console.log(`Embedding generated with length: ${embed_as_list.length}`);
+
     await saveEmbeddingToFile(embed_as_list, imgPath);
-    console.log(`Processed and saved embedding for: ${imgPath}`);
+    console.log(`💪 Processed and saved embedding for: ${imgPath}`);
   } else {
-    console.log(`Embedding already exists for: ${imgPath}`);
+    console.log(`✅ Embedding already exists for: ${imgPath}`);
   }
 }
+
 async function clipImages(images) {
   const chunks = _.chunk(images, 10);
   for (const chunk of chunks) {
@@ -123,9 +150,6 @@ function scanImages(dir) {
   return allImages;
 }
 
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const allImages = scanImages(path.join(__dirname, "../concepts"));
 //const allImages = scanImages(path.join(import.meta.url, "../../concepts"));
 clipImages(allImages);
