@@ -1,4 +1,7 @@
 import fetch, { Headers } from "node-fetch";
+import fs from "fs";
+import path from "path";
+import _ from "lodash";
 
 if (!globalThis.fetch) {
   globalThis.fetch = fetch;
@@ -45,6 +48,45 @@ async function clipByUrl(url) {
     throw e;
   }
 }
+
+function clipLocalPath(localPath) {
+  const fullpath = path.join(import.meta.url, localPath);
+  const u = new URL(fullpath, "file://");
+  console.log(u);
+  return u.toString();
+}
+
+function scanImages(dir) {
+  const allImages = [];
+  const files = fs.readdirSync(dir);
+
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    if (fs.statSync(filePath).isDirectory()) {
+      allImages.push(...scanImages(filePath));
+    } else if (
+      [".jpg", ".jpeg", ".png", ".gif"].includes(
+        path.extname(file).toLowerCase()
+      )
+    ) {
+      allImages.push(filePath);
+    }
+  });
+
+  return allImages;
+}
+
+async function clipImages(images) {
+  const imageUrls = images.map((imgPath) => clipLocalPath(imgPath));
+  const chunks = _.chunk(imageUrls, 10);
+
+  for (const chunk of chunks) {
+    await Promise.all(chunk.map((url) => clipByUrl(url)));
+  }
+}
+
+const allImages = scanImages(path.join(import.meta.url, "/concept"));
+clipImages(allImages);
 
 clipByUrl(
   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/362px-Cat_August_2010-4.jpg"
