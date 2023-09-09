@@ -16,7 +16,7 @@ import { pipeline } from "@xenova/transformers";
 
 var dummy = "cats are pretty, i guess"; // "I love transformers!";
 
-const RERUN_ALL_CLIP = false;
+const RERUN_ALL_CLIP = true;
 const CLIP_MODEL = "Xenova/clip-vit-large-patch14"; // "Xenova/clip-vit-base-patch16"; // "openai/clip-vit-base-patch32";
 
 import {
