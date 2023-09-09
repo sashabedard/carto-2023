@@ -42,16 +42,55 @@ async function clipByUrl(url) {
     const { image_embeds } = await vision_model(image_inputs);
     const embed_as_list = image_embeds.tolist()[0];
     console.log(embed_as_list, "clipByUrl", url);
+    return embed_as_list;
   } catch (e) {
     // Unable to load image, so we ignore it
-    console.warn("Ignoring image due to error", e);
+    console.warn("Ignoring image due to error", e, url);
     throw e;
   }
 }
 
+async function saveEmbeddingToFile(embed_as_list, imagePath) {
+  const dirname = path.dirname(imagePath);
+  const filenameWithoutExt = path.basename(imagePath, path.extname(imagePath));
+  const savePath = path.join(dirname, "data", `${filenameWithoutExt}.txt`);
+
+  // Ensure the directory exists
+  if (!fs.existsSync(path.dirname(savePath))) {
+    fs.mkdirSync(path.dirname(savePath), { recursive: true });
+  }
+
+  fs.writeFileSync(savePath, JSON.stringify(embed_as_list));
+}
+
+async function clipImageAndSave(imgPath) {
+  const url = clipLocalPath(imgPath);
+  const embed_as_list = await clipByUrl(url);
+  await saveEmbeddingToFile(embed_as_list, imgPath);
+}
+
+async function clipImages(images) {
+  const chunks = _.chunk(images, 10);
+  for (const chunk of chunks) {
+    await Promise.all(chunk.map((imgPath) => clipImageAndSave(imgPath)));
+  }
+}
+
+//import { fileURLToPath } from "url";
+
 function clipLocalPath(localPath) {
-  const fullpath = path.join(import.meta.url, localPath);
-  const u = new URL(fullpath, "file://");
+  let fullpath;
+
+  // Check if the path is absolute
+  if (path.isAbsolute(localPath)) {
+    fullpath = localPath;
+  } else {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    fullpath = path.join(__dirname, localPath);
+  }
+
+  return fullpath;
+  const u = new URL(`file://${fullpath}`);
   console.log(u);
   return u.toString();
 }
@@ -76,16 +115,11 @@ function scanImages(dir) {
   return allImages;
 }
 
-async function clipImages(images) {
-  const imageUrls = images.map((imgPath) => clipLocalPath(imgPath));
-  const chunks = _.chunk(imageUrls, 10);
+import { fileURLToPath } from "url";
 
-  for (const chunk of chunks) {
-    await Promise.all(chunk.map((url) => clipByUrl(url)));
-  }
-}
-
-const allImages = scanImages(path.join(import.meta.url, "/concept"));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const allImages = scanImages(path.join(__dirname, "../concepts"));
+//const allImages = scanImages(path.join(import.meta.url, "../../concepts"));
 clipImages(allImages);
 
 clipByUrl(
