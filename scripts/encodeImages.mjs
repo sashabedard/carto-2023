@@ -41,7 +41,7 @@ async function clipByUrl(url) {
     // Compute embeddings
     const { image_embeds } = await vision_model(image_inputs);
     const embed_as_list = image_embeds.tolist()[0];
-    console.log(embed_as_list, "clipByUrl", url);
+    console.log(embed_as_list.length, "clipByUrl", url);
     return embed_as_list;
   } catch (e) {
     // Unable to load image, so we ignore it
@@ -64,11 +64,19 @@ async function saveEmbeddingToFile(embed_as_list, imagePath) {
 }
 
 async function clipImageAndSave(imgPath) {
-  const url = clipLocalPath(imgPath);
-  const embed_as_list = await clipByUrl(url);
-  await saveEmbeddingToFile(embed_as_list, imgPath);
-}
+  const dirname = path.dirname(imgPath);
+  const filenameWithoutExt = path.basename(imgPath, path.extname(imgPath));
+  const savePath = path.join(dirname, "data", `${filenameWithoutExt}.txt`);
 
+  if (!fs.existsSync(savePath)) {
+    const url = clipLocalPath(imgPath);
+    const embed_as_list = await clipByUrl(url);
+    await saveEmbeddingToFile(embed_as_list, imgPath);
+    console.log(`Processed and saved embedding for: ${imgPath}`);
+  } else {
+    console.log(`Embedding already exists for: ${imgPath}`);
+  }
+}
 async function clipImages(images) {
   const chunks = _.chunk(images, 10);
   for (const chunk of chunks) {
@@ -142,7 +150,7 @@ async function clipByText(text) {
   let text_inputs = tokenizer(text, { padding: true, truncation: true });
   const { text_embeds } = await text_model(text_inputs);
   const query_embedding = text_embeds.tolist()[0];
-  console.log(query_embedding, "clipByText", text);
+  console.log(query_embedding.length, "clipByText:", text);
 }
 
 clipByText("cat");
