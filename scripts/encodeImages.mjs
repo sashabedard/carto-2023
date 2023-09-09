@@ -77,3 +77,17 @@ let sentimentOut = await sentimentsPipe(dummy);
 
 console.log(sentimentOut, dummy);
 // [{'label': 'POSITIVE', 'score': 0.999817686}]
+
+/*
+
+TODO: ADA2
+
+
+*/
+
+const adaTokenizer = await AutoTokenizer.from_pretrained(
+  "Xenova/text-embedding-ada-002"
+);
+const tokens = adaTokenizer.encode("hello world"); // [15339, 1917]
+//Please note that this is only the tokenizer for the model, and does not contain any model weights, meaning it cannot be used for generating embeddings.
+//The main purpose of this repo was to be able to count the number of tokens that will be sent to the OpenAI API.
