@@ -1,3 +1,5 @@
+//node 18 minimum
+
 import fetch, { Headers } from "node-fetch";
 import fs from "fs";
 import path from "path";
